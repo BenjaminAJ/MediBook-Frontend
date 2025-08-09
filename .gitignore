@@ -23,4 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+.env.example
+
+# OLD FILES TO DELETE AFTER TYPESCRIPT MIGRATION:
+# - vite.config.js (replaced by vite.config.ts)
+# - src/utils/formatDate.js (replaced by src/utils/formatDate.ts)
+# - src/services/api.js (replaced by src/services/api.ts)
+# - src/main.jsx (replaced by src/main.tsx)
+# - src/App.jsx (replaced by src/App.tsx)
