@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-.env.example
+.env
 
 # OLD FILES TO DELETE AFTER TYPESCRIPT MIGRATION:
 # - vite.config.js (replaced by vite.config.ts)
