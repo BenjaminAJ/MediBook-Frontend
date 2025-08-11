@@ -10,6 +10,10 @@ import AdminLogin from "./Admin/Login";
 import AdminDashboard from "./Admin/Dashboard";
 import AdminUserManagement from "./Admin/UserManagement";
 import AdminAuditLogs from "./Admin/AuditLogs";
+import PatientDashboard from "./pages/patientdashboard/Dashboard";
+import PatientHistory from "./pages/patientdashboard/History";
+import PatientProfile from "./pages/patientdashboard/Profile";
+import PatientAppointments from "./pages/patientdashboard/Appointments";
 
 // Admin dashboard layout with nested routes
 const adminDashboardRoutes: RouteObject = {
@@ -25,6 +29,17 @@ const adminDashboardRoutes: RouteObject = {
   ],
 };
 
+// Patient dashboard layout with nested routes
+const patientDashboardRoutes: RouteObject = {
+  path: "/dashboard",
+  element: <PatientDashboard />,
+  children: [
+    { path: "history", element: <PatientHistory /> },
+    { path: "profile", element: <PatientProfile /> },
+    { path: "appointments", element: <PatientAppointments /> },
+  ],
+};
+
 const router = createBrowserRouter([
   { path: "/", 
     element: <Login /> 
@@ -36,6 +51,7 @@ const router = createBrowserRouter([
     element: <AdminLogin /> 
   },
   adminDashboardRoutes,
+  patientDashboardRoutes,
 ]);
 
 function App(): React.ReactElement {
