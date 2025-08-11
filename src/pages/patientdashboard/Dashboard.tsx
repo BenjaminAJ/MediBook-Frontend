@@ -3,21 +3,21 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CalendarCheck2, User, History, LogOut } from "lucide-react";
 
 const navItems = [
-  {
-    label: "Appointments",
-    icon: <CalendarCheck2 size={20} className="mr-2" />,
-    path: "/dashboard/appointments",
-  },
-  {
-    label: "History",
-    icon: <History size={20} className="mr-2" />,
-    path: "/dashboard/history",
-  },
-  {
-    label: "Profile",
-    icon: <User size={20} className="mr-2" />,
-    path: "/dashboard/profile",
-  },
+    {
+        label: "Profile",
+        icon: <User size={20} className="mr-2" />,
+        path: "/dashboard/profile",
+    },
+    {
+        label: "Appointments",
+        icon: <CalendarCheck2 size={20} className="mr-2" />,
+        path: "/dashboard/appointments",
+    },
+    {
+        label: "History",
+        icon: <History size={20} className="mr-2" />,
+        path: "/dashboard/history",
+    },
 ];
 
 const SIDEBAR_WIDTH = 220;
