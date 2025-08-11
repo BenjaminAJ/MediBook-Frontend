@@ -15,7 +15,7 @@ const navItems = [
   },
 ];
 
-const SIDEBAR_WIDTH = 256; // 64 * 4 (w-64)
+const SIDEBAR_WIDTH = 256; 
 
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
@@ -75,7 +75,6 @@ const AdminDashboard: React.FC = () => {
               </p>
             </>
           )}
-          {/* Nested routes will render here if using react-router Outlet */}
           <Outlet />
         </div>
       </main>
