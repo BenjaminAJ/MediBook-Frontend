@@ -14,6 +14,10 @@ import PatientDashboard from "./pages/patientdashboard/Dashboard";
 import PatientHistory from "./pages/patientdashboard/History";
 import PatientProfile from "./pages/patientdashboard/Profile";
 import PatientAppointments from "./pages/patientdashboard/Appointments";
+import ProviderDashboard from "./Admin/Providers/Dashboard";
+import ProviderManageSchedule from "./Admin/Providers/ManageSchedule";
+import ProviderUpdateAvailability from "./Admin/Providers/UpdateAvailability";
+import ProviderViewAppointments from "./Admin/Providers/ViewAppointments";
 
 // Admin dashboard layout with nested routes
 const adminDashboardRoutes: RouteObject = {
@@ -40,6 +44,17 @@ const patientDashboardRoutes: RouteObject = {
   ],
 };
 
+// Provider dashboard layout with nested routes
+const providerDashboardRoutes: RouteObject = {
+  path: "/provider/dashboard",
+  element: <ProviderDashboard />,
+  children: [
+    { path: "schedule", element: <ProviderManageSchedule /> },
+    { path: "appointments", element: <ProviderViewAppointments /> },
+    { path: "availability", element: <ProviderUpdateAvailability /> },
+  ],
+};
+
 const router = createBrowserRouter([
   { path: "/", 
     element: <Login /> 
@@ -52,6 +67,7 @@ const router = createBrowserRouter([
   },
   adminDashboardRoutes,
   patientDashboardRoutes,
+  providerDashboardRoutes,
 ]);
 
 function App(): React.ReactElement {
