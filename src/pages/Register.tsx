@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import D3Message from '../components/D3Message';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,8 +11,14 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Message state
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Example usage:
+    // setMessage({ type: 'success', text: 'Registration successful!' });
+    // setMessage({ type: 'error', text: 'Passwords do not match.' });
     // TODO: Implement registration logic
   };
 
@@ -47,6 +54,14 @@ const Register: React.FC = () => {
               Register for a new MediBook account
             </p>
           </div>
+          {/* Show message if present */}
+          {message && (
+            <D3Message
+              type={message.type}
+              message={message.text}
+              onClose={() => setMessage(null)}
+            />
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block mb-1 font-medium text-gray-700">
