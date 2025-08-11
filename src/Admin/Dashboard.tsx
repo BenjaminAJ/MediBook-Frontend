@@ -1,6 +1,6 @@
 import React from "react";
-import { Users, FileText } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Users, FileText, LogOut } from "lucide-react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   {
@@ -19,8 +19,14 @@ const SIDEBAR_WIDTH = 256;
 
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isDashboardRoot = location.pathname === "/admin/dashboard";
+
+  const handleLogout = () => {
+    // Clear any admin session/token here if needed
+    navigate("/admin/login");
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -58,6 +64,15 @@ const AdminDashboard: React.FC = () => {
             ))}
           </ul>
         </nav>
+        <div className="p-6 border-t border-gray-800">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-2 hover:bg-red-700 text-white rounded transition font-semibold"
+          >
+            <LogOut size={20} className="mr-2" />
+            Logout
+          </button>
+        </div>
       </aside>
       {/* Main content */}
       <main
