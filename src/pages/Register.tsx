@@ -151,7 +151,7 @@ const Register: React.FC = () => {
           <div className="mt-8 text-center">
             <span className="text-gray-600">Already have an account? </span>
             <Link
-              to="/login"
+              to="/"
               className="text-green-600 font-medium hover:underline"
             >
               Login
