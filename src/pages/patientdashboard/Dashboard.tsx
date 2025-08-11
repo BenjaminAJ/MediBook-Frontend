@@ -26,6 +26,8 @@ const PatientDashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isDashboardRoot = location.pathname === "/Dashboard";
+
   const handleLogout = () => {
     // Clear patient session/token here if needed
     navigate("/");
@@ -83,6 +85,16 @@ const PatientDashboard: React.FC = () => {
         style={{ marginLeft: SIDEBAR_WIDTH, minHeight: "100vh" }}
       >
         <div className="w-full max-w-4xl p-8">
+          {isDashboardRoot && (
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-green-700 mb-2">
+                Welcome to your Dashboard!
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Please pick an option from the sidebar to get started.
+              </p>
+            </div>
+          )}
           <Outlet />
         </div>
       </main>
