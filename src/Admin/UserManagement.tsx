@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, Pencil, ShieldCheck } from 'lucide-react';
+import D3Message from '../components/D3Message';
 
 // Demo user data
 type User = {
@@ -17,19 +18,43 @@ const initialUsers: User[] = [
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [confirm, setConfirm] = useState<{
+    type: 'delete' | 'role';
+    user: User | null;
+  }>({ type: 'delete', user: null });
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleDelete = (id: number) => {
-    setUsers(users.filter(user => user.id !== id));
+    setConfirm({ type: 'delete', user: users.find(u => u.id === id) || null });
   };
 
   const handleToggleRole = (id: number) => {
-    setUsers(users =>
-      users.map(user =>
-        user.id === id
-          ? { ...user, role: user.role === 'admin' ? 'user' : 'admin' }
-          : user
-      )
-    );
+    setConfirm({ type: 'role', user: users.find(u => u.id === id) || null });
+  };
+
+  const confirmDelete = () => {
+    if (confirm.user) {
+      setUsers(users.filter(user => user.id !== confirm.user!.id));
+      setMessage({ type: 'success', text: `User "${confirm.user.name}" deleted.` });
+    }
+    setConfirm({ type: 'delete', user: null });
+  };
+
+  const confirmRole = () => {
+    if (confirm.user) {
+      setUsers(users =>
+        users.map(user =>
+          user.id === confirm.user!.id
+            ? { ...user, role: user.role === 'admin' ? 'user' : 'admin' }
+            : user
+        )
+      );
+      setMessage({
+        type: 'success',
+        text: `User "${confirm.user.name}" is now ${confirm.user.role === 'admin' ? 'a user' : 'an admin'}.`
+      });
+    }
+    setConfirm({ type: 'role', user: null });
   };
 
   return (
@@ -44,6 +69,16 @@ const UserManagement: React.FC = () => {
       </header>
       <main className="flex-1 flex flex-col items-center w-full">
         <section className="w-full max-w-6xl bg-white rounded-2xl shadow-xl overflow-x-auto">
+          {/* D3Message for success/error */}
+          {message && (
+            <div className="px-6 pt-6">
+              <D3Message
+                type={message.type}
+                message={message.text}
+                onClose={() => setMessage(null)}
+              />
+            </div>
+          )}
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-white">
               <tr>
@@ -97,6 +132,39 @@ const UserManagement: React.FC = () => {
             </tbody>
           </table>
         </section>
+        {/* D3Message for confirmation */}
+        {confirm.user && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+            <div className="bg-white rounded-xl shadow-xl p-8 max-w-sm w-full">
+              <D3Message
+                type="error"
+                message={
+                  confirm.type === 'delete'
+                    ? `Are you sure you want to delete "${confirm.user.name}"?`
+                    : `Are you sure you want to ${confirm.user.role === 'admin' ? 'demote' : 'promote'} "${confirm.user.name}"?`
+                }
+              />
+              <div className="flex justify-end space-x-3 mt-2">
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                  onClick={() => setConfirm({ type: 'delete', user: null })}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={`px-4 py-2 rounded font-semibold ${
+                    confirm.type === 'delete'
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                  onClick={confirm.type === 'delete' ? confirmDelete : confirmRole}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
