@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
 import { register } from '../services/Authapi';
@@ -14,9 +14,14 @@ const Register: React.FC = () => {
 
   // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
+      return;
+    }
     if (password !== confirm) {
       setMessage({ type: 'error', text: 'Passwords do not match.' });
       return;
@@ -24,7 +29,9 @@ const Register: React.FC = () => {
     try {
       await register({ name, email, password });
       setMessage({ type: 'success', text: 'Registration successful!' });
-      // Optionally redirect after success
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
     } catch (err: any) {
       setMessage({
         type: 'error',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
 import { login } from '../services/Authapi';
@@ -8,17 +8,21 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
+      return;
+    }
     try {
-      const res = await login({ email, password });
-      // Optionally store token: localStorage.setItem('token', res.data.token);
+      await login({ email, password });
       setMessage({ type: 'success', text: 'Login successful!' });
-      // Optionally redirect after success
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
     } catch (err: any) {
       setMessage({
         type: 'error',
@@ -44,7 +48,6 @@ const Login: React.FC = () => {
           </h2>
           <p className="text-gray-500">Login to your MediBook account</p>
         </div>
-        {/* Show message if present */}
         {message && (
           <D3Message
             type={message.type}
