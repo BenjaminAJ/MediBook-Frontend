@@ -1,114 +1,176 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Pencil, Trash2, PlusCircle } from 'lucide-react';
-import D3Message from '../../components/D3Message';
-
-type Appointment = {
-  id: number;
-  date: string;
-  time: string;
-  Provider: string; // changed back to Provider (capital P)
-  reason: string;
-};
-
-const initialAppointments: Appointment[] = [
-  {
-    id: 1,
-    date: '2025-08-15',
-    time: '10:00',
-    Provider: 'Acme Health Clinic', // changed back to Provider
-    reason: 'Routine Checkup',
-  },
-];
+import React, { useState, useRef, useEffect } from "react";
+import { Pencil, Trash2, PlusCircle } from "lucide-react";
+import D3Message from "../../components/D3Message";
+import {
+  getPatientAppointments,
+  createAppointment,
+  updateAppointment,
+  cancelAppointment,
+  Appointment as ApiAppointment,
+} from "../../services/Appointmentapi";
 
 // D3 Loader Component
 const D3Loader: React.FC = () => {
   const ref = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    import('d3').then(d3 => {
+    import("d3").then((d3) => {
       const svg = d3.select(ref.current);
-      svg.selectAll('*').remove();
-      const width = 60, height = 60, r = 20;
-      const arc = d3.arc()
+      svg.selectAll("*").remove();
+      const width = 60,
+        height = 60,
+        r = 20;
+      const arc = d3
+        .arc()
         .innerRadius(r - 6)
         .outerRadius(r)
         .startAngle(0)
         .endAngle(Math.PI * 1.5);
 
-      svg.append('g')
-        .attr('transform', `translate(${width/2},${height/2})`)
-        .append('path')
-        .attr('d', arc as any)
-        .attr('fill', '#2563eb')
-        .attr('opacity', 0.8)
-        .attr('id', 'd3-loader-arc');
+      svg
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`)
+        .append("path")
+        .attr("d", arc as any)
+        .attr("fill", "#2563eb")
+        .attr("opacity", 0.8)
+        .attr("id", "d3-loader-arc");
 
       function animate() {
-        svg.select('#d3-loader-arc')
+        svg
+          .select("#d3-loader-arc")
           .transition()
           .duration(900)
-          .attrTween('transform', () => d3.interpolateString('rotate(0)', 'rotate(360)'))
-          .on('end', animate);
+          .attrTween("transform", () =>
+            d3.interpolateString("rotate(0)", "rotate(360)")
+          )
+          .on("end", animate);
       }
       animate();
     });
   }, []);
 
-  return (
-    <svg ref={ref} width={60} height={60} />
-  );
+  return <svg ref={ref} width={60} height={60} />;
+};
+
+type Appointment = {
+  id: number;
+  date: string;
+  time: string;
+  Provider: string;
+  reason: string;
 };
 
 const Appointments: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [editing, setEditing] = useState<Appointment | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState<Omit<Appointment, 'id'>>({
-    date: '',
-    time: '',
-    Provider: '',
-    reason: '',
+  const [form, setForm] = useState<Omit<Appointment, "id">>({
+    date: "",
+    time: "",
+    Provider: "",
+    reason: "",
   });
 
+  // Replace with actual patientId logic as needed
+  const patientId = localStorage.getItem("userId") || "1";
+
+  // Fetch appointments on mount
+  useEffect(() => {
+    setLoading(true);
+    getPatientAppointments(patientId)
+      .then((res) => {
+        // Map API data to local Appointment type
+        const data = Array.isArray(res.data) ? res.data : [];
+        setAppointments(
+          data.map((a: ApiAppointment) => ({
+            id: a.id!,
+            date: a.date,
+            time: a.time,
+            Provider: a.providerId || "", // or map to provider name if available
+            reason: a.reason,
+          }))
+        );
+      })
+      .catch(() =>
+        setMessage({ type: "error", text: "Failed to load appointments." })
+      )
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line
+  }, []);
+
   const resetForm = () => {
-    setForm({ date: '', time: '', Provider: '', reason: '' });
+    setForm({ date: "", time: "", Provider: "", reason: "" });
     setEditing(null);
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
   const handleBook = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.date || !form.time || !form.Provider || !form.reason) {
-      setMessage({ type: 'error', text: 'Please fill all fields.' });
+      setMessage({ type: "error", text: "Please fill all fields." });
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      if (editing) {
-        setAppointments(apps =>
-          apps.map(app =>
-            app.id === editing.id ? { ...editing, ...form } : app
-          )
+    const apiData: Omit<ApiAppointment, "id"> = {
+      date: form.date,
+      time: form.time,
+      doctor: "", // not used in UI
+      reason: form.reason,
+      patientId: patientId,
+      providerId: form.Provider,
+      status: "scheduled",
+    };
+    const action = editing
+      ? updateAppointment(editing.id, apiData)
+      : createAppointment(apiData);
+
+    action
+      .then(() => {
+        setMessage({
+          type: "success",
+          text: editing ? "Appointment updated." : "Appointment booked.",
+        });
+        // Refresh appointments
+        return getPatientAppointments(patientId);
+      })
+      .then((res) => {
+        const data = Array.isArray(res.data) ? res.data : [];
+        setAppointments(
+          data.map((a: ApiAppointment) => ({
+            id: a.id!,
+            date: a.date,
+            time: a.time,
+            Provider: a.providerId || "",
+            reason: a.reason,
+          }))
         );
-        setMessage({ type: 'success', text: 'Appointment updated.' });
-      } else {
-        setAppointments(apps => [
-          ...apps,
-          { ...form, id: Date.now() },
-        ]);
-        setMessage({ type: 'success', text: 'Appointment booked.' });
-      }
-      setShowForm(false);
-      resetForm();
-      setLoading(false);
-    }, 1000);
+      })
+      .catch(() =>
+        setMessage({
+          type: "error",
+          text: editing
+            ? "Failed to update appointment."
+            : "Failed to book appointment.",
+        })
+      )
+      .finally(() => {
+        setShowForm(false);
+        resetForm();
+        setLoading(false);
+      });
   };
 
   const handleEdit = (app: Appointment) => {
@@ -124,11 +186,27 @@ const Appointments: React.FC = () => {
 
   const handleCancel = (id: number) => {
     setLoading(true);
-    setTimeout(() => {
-      setAppointments(apps => apps.filter(app => app.id !== id));
-      setMessage({ type: 'success', text: 'Appointment cancelled.' });
-      setLoading(false);
-    }, 800);
+    cancelAppointment(id)
+      .then(() => {
+        setMessage({ type: "success", text: "Appointment cancelled." });
+        return getPatientAppointments(patientId);
+      })
+      .then((res) => {
+        const data = Array.isArray(res.data) ? res.data : [];
+        setAppointments(
+          data.map((a: ApiAppointment) => ({
+            id: a.id!,
+            date: a.date,
+            time: a.time,
+            Provider: a.providerId || "",
+            reason: a.reason,
+          }))
+        );
+      })
+      .catch(() =>
+        setMessage({ type: "error", text: "Failed to cancel appointment." })
+      )
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -166,7 +244,9 @@ const Appointments: React.FC = () => {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Date</label>
+              <label className="block mb-1 font-medium text-gray-700">
+                Date
+              </label>
               <input
                 type="date"
                 name="date"
@@ -177,7 +257,9 @@ const Appointments: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Time</label>
+              <label className="block mb-1 font-medium text-gray-700">
+                Time
+              </label>
               <input
                 type="time"
                 name="time"
@@ -188,7 +270,9 @@ const Appointments: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Provider</label>
+              <label className="block mb-1 font-medium text-gray-700">
+                Provider
+              </label>
               <input
                 type="text"
                 name="Provider"
@@ -199,7 +283,9 @@ const Appointments: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Reason</label>
+              <label className="block mb-1 font-medium text-gray-700">
+                Reason
+              </label>
               <textarea
                 name="reason"
                 value={form.reason}
@@ -224,14 +310,16 @@ const Appointments: React.FC = () => {
               type="submit"
               className="px-6 py-2 rounded bg-green-600 text-white font-bold hover:bg-green-700 transition"
             >
-              {editing ? 'Update' : 'Book'}
+              {editing ? "Update" : "Book"}
             </button>
           </div>
         </form>
       )}
       {/* Appointment List */}
       <div className="bg-white rounded-xl shadow p-4">
-        <h3 className="text-lg font-semibold mb-4 text-blue-800">Your Appointments</h3>
+        <h3 className="text-lg font-semibold mb-4 text-blue-800">
+          Your Appointments
+        </h3>
         {appointments.length === 0 ? (
           <p className="text-gray-500">No appointments found.</p>
         ) : (
@@ -246,7 +334,7 @@ const Appointments: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {appointments.map(app => (
+              {appointments.map((app) => (
                 <tr key={app.id} className="border-t">
                   <td className="px-4 py-2">{app.date}</td>
                   <td className="px-4 py-2">{app.time}</td>
