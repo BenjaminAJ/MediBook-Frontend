@@ -30,7 +30,7 @@ const Register: React.FC = () => {
       await register({ name, email, password });
       setMessage({ type: 'success', text: 'Registration successful!' });
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/Dashboard');
       }, 1000);
     } catch (err: any) {
       setMessage({

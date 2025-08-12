@@ -21,7 +21,7 @@ const Login: React.FC = () => {
       await login({ email, password });
       setMessage({ type: 'success', text: 'Login successful!' });
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/Dashboard');
       }, 1000);
     } catch (err: any) {
       setMessage({
