@@ -1,18 +1,85 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { CalendarCheck2 } from "lucide-react";
 import { getPatientAppointments, Appointment as ApiAppointment } from "../../services/Appointmentapi";
+
+// Cool D3 Loader
+const D3CoolLoader: React.FC = () => {
+  const ref = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    import("d3").then((d3) => {
+      const svg = d3.select(ref.current);
+      svg.selectAll("*").remove();
+      const width = 80,
+        height = 80,
+        r = 24,
+        num = 6;
+      const colors = [
+        "#facc15",
+        "#fde047",
+        "#fbbf24",
+        "#f59e42",
+        "#f472b6",
+        "#38bdf8",
+      ];
+      const group = svg
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+      for (let i = 0; i < num; i++) {
+        group
+          .append("circle")
+          .attr("r", 7)
+          .attr("fill", colors[i % colors.length])
+          .attr("cx", r * Math.cos((2 * Math.PI * i) / num))
+          .attr("cy", r * Math.sin((2 * Math.PI * i) / num))
+          .attr("opacity", 0.8)
+          .attr("class", `d3-cool-loader-dot-${i}`);
+      }
+      function animate() {
+        for (let i = 0; i < num; i++) {
+          group
+            .select(`.d3-cool-loader-dot-${i}`)
+            .transition()
+            .duration(1200)
+            .delay(i * 100)
+            .attrTween("transform", () =>
+              d3.interpolateString("scale(1)", "scale(1.5)")
+            )
+            .transition()
+            .duration(1200)
+            .attrTween("transform", () =>
+              d3.interpolateString("scale(1.5)", "scale(1)")
+            );
+        }
+        group
+          .transition()
+          .duration(2400)
+          .attrTween("transform", () =>
+            d3.interpolateString(
+              `rotate(0,0,0) translate(${width / 2},${height / 2})`,
+              `rotate(360,0,0) translate(${width / 2},${height / 2})`
+            )
+          )
+          .on("end", animate);
+      }
+      animate();
+    });
+  }, []);
+
+  return <svg ref={ref} width={80} height={80} />;
+};
 
 const History: React.FC = () => {
   const [history, setHistory] = useState<ApiAppointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Replace with actual patientId logic as needed
-  const patientId = localStorage.getItem('userId') || '1';
+  const patientId = localStorage.getItem("userId") || "1";
 
   useEffect(() => {
     setLoading(true);
     getPatientAppointments(patientId)
-      .then(res => {
+      .then((res) => {
         setHistory(Array.isArray(res.data) ? res.data : []);
       })
       .finally(() => setLoading(false));
@@ -28,7 +95,12 @@ const History: React.FC = () => {
       </div>
       <div className="bg-white rounded-xl shadow p-4">
         {loading ? (
-          <p className="text-gray-500">Loading...</p>
+          <div className="flex flex-col items-center justify-center py-16">
+            <D3CoolLoader />
+            <div className="mt-4 text-yellow-700 font-semibold text-lg animate-pulse">
+              Loading your history...
+            </div>
+          </div>
         ) : history.length === 0 ? (
           <p className="text-gray-500">No appointment history found.</p>
         ) : (
@@ -61,7 +133,8 @@ const History: React.FC = () => {
                           }`}
                     >
                       {item.status
-                        ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
+                        ? item.status.charAt(0).toUpperCase() +
+                          item.status.slice(1)
                         : "Scheduled"}
                     </span>
                   </td>
