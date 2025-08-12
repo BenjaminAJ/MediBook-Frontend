@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
+import { login } from '../services/Authapi';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,12 +12,22 @@ const Login: React.FC = () => {
   // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Example usage:
-    // setMessage({ type: 'success', text: 'Login successful!' });
-    // setMessage({ type: 'error', text: 'Invalid credentials.' });
-    // TODO: Implement login logic
+    try {
+      const res = await login({ email, password });
+      // Optionally store token: localStorage.setItem('token', res.data.token);
+      setMessage({ type: 'success', text: 'Login successful!' });
+      // Optionally redirect after success
+    } catch (err: any) {
+      setMessage({
+        type: 'error',
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          'Invalid credentials.',
+      });
+    }
   };
 
   return (

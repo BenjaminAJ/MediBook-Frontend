@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
+import { register } from '../services/Authapi';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -14,12 +15,25 @@ const Register: React.FC = () => {
   // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Example usage:
-    // setMessage({ type: 'success', text: 'Registration successful!' });
-    // setMessage({ type: 'error', text: 'Passwords do not match.' });
-    // TODO: Implement registration logic
+    if (password !== confirm) {
+      setMessage({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+    try {
+      await register({ name, email, password });
+      setMessage({ type: 'success', text: 'Registration successful!' });
+      // Optionally redirect after success
+    } catch (err: any) {
+      setMessage({
+        type: 'error',
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          'Registration failed.',
+      });
+    }
   };
 
   return (
