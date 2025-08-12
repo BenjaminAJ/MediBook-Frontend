@@ -48,15 +48,15 @@ const patientDashboardRoutes: RouteObject = {
 
 // Provider dashboard layout with nested routes
 const providerDashboardRoutes: RouteObject = {
-  path: "/provider/login",
-  element: <ProviderLogin />,
+  path: "/provider/dashboard",
+  element: <ProviderDashboard />,
   children: [
-    { path : "dashboard", element: <ProviderDashboard /> },
     { path: "schedule", element: <ProviderManageSchedule /> },
     { path: "appointments", element: <ProviderViewAppointments /> },
     { path: "availability", element: <ProviderUpdateAvailability /> },
   ],
 };
+
 
 const router = createBrowserRouter([
   { path: "/", 
@@ -68,12 +68,14 @@ const router = createBrowserRouter([
   { path: "/admin/login", 
     element: <AdminLogin /> 
   },
+  { path: "/provider/login", 
+    element: <ProviderLogin /> 
+  },
   adminDashboardRoutes,
   patientDashboardRoutes,
   providerDashboardRoutes,
   { path: "*", element: <NotFound /> },
 ]);
-
 function App(): React.ReactElement {
   return <RouterProvider router={router} />;
 }
