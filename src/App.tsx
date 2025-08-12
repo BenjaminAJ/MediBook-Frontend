@@ -18,6 +18,7 @@ import ProviderDashboard from "./Admin/Providers/Dashboard";
 import ProviderManageSchedule from "./Admin/Providers/ManageSchedule";
 import ProviderUpdateAvailability from "./Admin/Providers/UpdateAvailability";
 import ProviderViewAppointments from "./Admin/Providers/ViewAppointments";
+import ProviderLogin from "./Admin/Providers/Login";
 import NotFound from "./pages/NotFound";
 
 // Admin dashboard layout with nested routes
@@ -47,9 +48,10 @@ const patientDashboardRoutes: RouteObject = {
 
 // Provider dashboard layout with nested routes
 const providerDashboardRoutes: RouteObject = {
-  path: "/provider/dashboard",
-  element: <ProviderDashboard />,
+  path: "/provider/login",
+  element: <ProviderLogin />,
   children: [
+    { path : "dashboard", element: <ProviderDashboard /> },
     { path: "schedule", element: <ProviderManageSchedule /> },
     { path: "appointments", element: <ProviderViewAppointments /> },
     { path: "availability", element: <ProviderUpdateAvailability /> },
