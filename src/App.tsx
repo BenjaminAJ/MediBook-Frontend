@@ -18,6 +18,7 @@ import ProviderDashboard from "./Admin/Providers/Dashboard";
 import ProviderManageSchedule from "./Admin/Providers/ManageSchedule";
 import ProviderUpdateAvailability from "./Admin/Providers/UpdateAvailability";
 import ProviderViewAppointments from "./Admin/Providers/ViewAppointments";
+import NotFound from "./pages/NotFound";
 
 // Admin dashboard layout with nested routes
 const adminDashboardRoutes: RouteObject = {
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
   adminDashboardRoutes,
   patientDashboardRoutes,
   providerDashboardRoutes,
+  { path: "*", element: <NotFound /> },
 ]);
 
 function App(): React.ReactElement {
