@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { getUserProfile, updateUserProfile } from "../../services/Userapi";
+import { getAuthenticatedUserProfile, updateUserProfile } from "../../services/Userapi";
+import { useAuth } from "../../context/AuthContext"; // Import useAuth
 
 type Address = {
   street: string;
@@ -106,14 +107,20 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Replace with actual user ID logic as needed
-  const userId = localStorage.getItem("userId") || "1";
+  const { user } = useAuth(); // Get user from AuthContext
 
   // Fetch user profile on mount
   useEffect(() => {
+    if (!user || !user.token) {
+      setError("User not authenticated.");
+      setFetching(false);
+      return;
+    }
+
     setFetching(true);
     setError(null);
-    getUserProfile(userId)
-      .then((res) => {
+    getAuthenticatedUserProfile()
+      .then((res: any) => { // Explicitly type res as any for now to resolve TS error
         // Map API response to form structure if needed
         setForm({
           name: res.data.name || "",
@@ -135,16 +142,17 @@ const Profile: React.FC = () => {
               ? res.data.medicalInfo.medicalHistory
               : [""],
           },
-          providerInfo: {
+          // Only include providerInfo if the user's role is 'provider'
+          providerInfo: user.role === 'provider' ? {
             specialization: res.data.providerInfo?.specialization || "",
             clinicName: res.data.providerInfo?.clinicName || "",
             licenseNumber: res.data.providerInfo?.licenseNumber || "",
-          },
+          } : initialState.providerInfo,
         });
       })
       .catch(() => setError("Failed to load profile."))
       .finally(() => setFetching(false));
-  }, [userId]);
+  }, [user]); // Depend on user from AuthContext
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -217,17 +225,34 @@ const Profile: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    updateUserProfile(userId, form)
-      .then(() => {
-        setIsEditing(false);
-        alert("Profile saved!");
-      })
-      .catch(() => setError("Failed to save profile."))
-      .finally(() => setLoading(false));
+
+    if (!user || !user.id) {
+      setError("User not authenticated. Cannot save profile.");
+      setLoading(false);
+      return;
+    }
+
+    // Filter out providerInfo if the user is a patient
+    const dataToUpdate = user.role === 'patient' ? {
+      name: form.name,
+      phone: form.phone,
+      address: form.address,
+      medicalInfo: form.medicalInfo,
+    } : form;
+
+    try {
+      await updateUserProfile(user.id, dataToUpdate);
+      setIsEditing(false);
+      alert("Profile saved!");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || "Failed to save profile.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (fetching) {
@@ -474,51 +499,55 @@ const Profile: React.FC = () => {
             </button>
           )}
         </div>
-        {/* Provider Info */}
-        <h3 className="text-xl font-semibold mb-2 text-green-600">
-          Provider Information
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              Specialization
-            </label>
-            <input
-              type="text"
-              name="providerInfo.specialization"
-              value={form.providerInfo.specialization}
-              onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-lg"
-              disabled={!isEditing}
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              Clinic Name
-            </label>
-            <input
-              type="text"
-              name="providerInfo.clinicName"
-              value={form.providerInfo.clinicName}
-              onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-lg"
-              disabled={!isEditing}
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium text-gray-700">
-              License Number
-            </label>
-            <input
-              type="text"
-              name="providerInfo.licenseNumber"
-              value={form.providerInfo.licenseNumber}
-              onChange={handleChange}
-              className="w-full border border-gray-300 px-4 py-2 rounded-lg"
-              disabled={!isEditing}
-            />
-          </div>
-        </div>
+        {/* Provider Info - Only show if user is a provider */}
+        {user?.role === 'provider' && (
+          <>
+            <h3 className="text-xl font-semibold mb-2 text-green-600">
+              Provider Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Specialization
+                </label>
+                <input
+                  type="text"
+                  name="providerInfo.specialization"
+                  value={form.providerInfo.specialization}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg"
+                  disabled={!isEditing}
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Clinic Name
+                </label>
+                <input
+                  type="text"
+                  name="providerInfo.clinicName"
+                  value={form.providerInfo.clinicName}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg"
+                  disabled={!isEditing}
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  License Number
+                </label>
+                <input
+                  type="text"
+                  name="providerInfo.licenseNumber"
+                  value={form.providerInfo.licenseNumber}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg"
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+          </>
+        )}
         {isEditing && (
           <div className="flex justify-end">
             <button

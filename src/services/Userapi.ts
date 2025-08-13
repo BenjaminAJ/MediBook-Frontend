@@ -1,7 +1,12 @@
 import api from './api';
 
-// Get user profile by ID
-export const getUserProfile = (id: string | number) => {
+// Get authenticated user's profile
+export const getAuthenticatedUserProfile = () => {
+  return api.get(`/users/profile`);
+};
+
+// Get any user profile by ID (Admin only)
+export const getUserProfileById = (id: string | number) => {
   return api.get(`/users/${id}`);
 };
 
