@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
 import { login } from '../services/Authapi';
+import { useAuth } from '../context/AuthContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth(); // Rename to avoid conflict with service login
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +20,9 @@ const Login: React.FC = () => {
       return;
     }
     try {
-      await login({ email, password });
+      const response = await login({ email, password }); // Call the API login
+      const userData = response.data; 
+      authLogin({ id: userData._id, email: userData.email, name: userData.name, role: userData.role, token: userData.token }); // Store user in context and local storage
       setMessage({ type: 'success', text: 'Login successful!' });
       setTimeout(() => {
         navigate('/Dashboard');
