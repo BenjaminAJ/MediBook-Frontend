@@ -23,6 +23,12 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const phoneRegex = /^(?:\+234|234|0)[789][01]\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      setMessage({ type: 'error', text: 'Invalid Nigerian phone number format.' });
+      setLoading(false);
+      return;
+    }
     if (password.length < 8) {
       setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
       setLoading(false);
@@ -134,7 +140,7 @@ const Register: React.FC = () => {
                 onChange={e => setPhone(e.target.value)}
                 required
                 autoComplete="tel"
-                placeholder="e.g., +1234567890"
+                placeholder="e.g., 08012345678 or +2348012345678"
               />
             </div>
             <div>
