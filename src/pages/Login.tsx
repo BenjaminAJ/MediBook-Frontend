@@ -9,14 +9,17 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // New loading state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const navigate = useNavigate();
   const { login: authLogin } = useAuth(); // Rename to avoid conflict with service login
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true when submission starts
     if (password.length < 8) {
       setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
+      setLoading(false); // Reset loading on error
       return;
     }
     try {
@@ -35,6 +38,8 @@ const Login: React.FC = () => {
           err?.message ||
           'Invalid credentials.',
       });
+    } finally {
+      setLoading(false); // Reset loading when submission finishes
     }
   };
 
@@ -98,8 +103,9 @@ const Login: React.FC = () => {
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+            disabled={loading} // Disable button when loading
           >
-            Login
+            {loading ? 'Logging In...' : 'Login'}
           </button>
         </form>
         <div className="mt-6 text-center">
