@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
+import { register } from '../services/Authapi';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,16 +11,42 @@ const Register: React.FC = () => {
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false); // New loading state
 
   // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Example usage:
-    // setMessage({ type: 'success', text: 'Registration successful!' });
-    // setMessage({ type: 'error', text: 'Passwords do not match.' });
-    // TODO: Implement registration logic
+    setLoading(true); // Set loading to true when submission starts
+    if (password.length < 8) {
+      setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
+      setLoading(false); // Reset loading on error
+      return;
+    }
+    if (password !== confirm) {
+      setMessage({ type: 'error', text: 'Passwords do not match.' });
+      setLoading(false); // Reset loading on error
+      return;
+    }
+    try {
+      await register({ name, email, password });
+      setMessage({ type: 'success', text: 'Registration successful!' });
+      setTimeout(() => {
+        navigate('/Dashboard');
+      }, 1000);
+    } catch (err: any) {
+      setMessage({
+        type: 'error',
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          'Registration failed.',
+      });
+    } finally {
+      setLoading(false); // Reset loading when submission finishes
+    }
   };
 
   return (
@@ -144,8 +171,9 @@ const Register: React.FC = () => {
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition"
+              disabled={loading} // Disable button when loading
             >
-              Register
+              {loading ? 'Registering...' : 'Register'}
             </button>
           </form>
           <div className="mt-8 text-center">

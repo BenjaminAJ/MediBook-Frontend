@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, Pencil, ShieldCheck } from 'lucide-react';
 import D3Message from '../components/D3Message';
+import { getAllUsers, deleteUser, updateUserRole } from '../services/Adminapi';
 
 // Demo user data
 type User = {
@@ -10,19 +11,22 @@ type User = {
   role: 'user' | 'admin';
 };
 
-const initialUsers: User[] = [
-  { id: 1, name: 'Jane Doe', email: 'jane@example.com', role: 'user' },
-  { id: 2, name: 'John Smith', email: 'john@example.com', role: 'admin' },
-  { id: 3, name: 'Alice Johnson', email: 'alice@example.com', role: 'user' },
-];
-
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [confirm, setConfirm] = useState<{
     type: 'delete' | 'role';
     user: User | null;
   }>({ type: 'delete', user: null });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Fetch users from API
+  useEffect(() => {
+    getAllUsers()
+      .then(res => {
+        setUsers(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(() => setMessage({ type: 'error', text: 'Failed to load users.' }));
+  }, []);
 
   const handleDelete = (id: number) => {
     setConfirm({ type: 'delete', user: users.find(u => u.id === id) || null });
@@ -34,25 +38,34 @@ const UserManagement: React.FC = () => {
 
   const confirmDelete = () => {
     if (confirm.user) {
-      setUsers(users.filter(user => user.id !== confirm.user!.id));
-      setMessage({ type: 'success', text: `User "${confirm.user.name}" deleted.` });
+      deleteUser(confirm.user.id)
+        .then(() => {
+          setUsers(users.filter(user => user.id !== confirm.user!.id));
+          setMessage({ type: 'success', text: `User "${confirm.user?.name}" deleted.` });
+        })
+        .catch(() => setMessage({ type: 'error', text: 'Failed to delete user.' }));
     }
     setConfirm({ type: 'delete', user: null });
   };
 
   const confirmRole = () => {
     if (confirm.user) {
-      setUsers(users =>
-        users.map(user =>
-          user.id === confirm.user!.id
-            ? { ...user, role: user.role === 'admin' ? 'user' : 'admin' }
-            : user
-        )
-      );
-      setMessage({
-        type: 'success',
-        text: `User "${confirm.user.name}" is now ${confirm.user.role === 'admin' ? 'a user' : 'an admin'}.`
-      });
+      const newRole = confirm.user.role === 'admin' ? 'user' : 'admin';
+      updateUserRole(confirm.user.id, newRole)
+        .then(() => {
+          setUsers(users =>
+            users.map(user =>
+              user.id === confirm.user!.id
+                ? { ...user, role: newRole }
+                : user
+            )
+          );
+          setMessage({
+            type: 'success',
+            text: `User "${confirm.user?.name}" is now ${newRole === 'admin' ? 'an admin' : 'a user'}.`
+          });
+        })
+        .catch(() => setMessage({ type: 'error', text: 'Failed to update user role.' }));
     }
     setConfirm({ type: 'role', user: null });
   };

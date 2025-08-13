@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
+import { login } from '../services/Authapi';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Example usage:
-    // setMessage({ type: 'success', text: 'Login successful!' });
-    // setMessage({ type: 'error', text: 'Invalid credentials.' });
-    // TODO: Implement login logic
+    if (password.length < 8) {
+      setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
+      return;
+    }
+    try {
+      await login({ email, password });
+      setMessage({ type: 'success', text: 'Login successful!' });
+      setTimeout(() => {
+        navigate('/Dashboard');
+      }, 1000);
+    } catch (err: any) {
+      setMessage({
+        type: 'error',
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          'Invalid credentials.',
+      });
+    }
   };
 
   return (
@@ -33,7 +48,6 @@ const Login: React.FC = () => {
           </h2>
           <p className="text-gray-500">Login to your MediBook account</p>
         </div>
-        {/* Show message if present */}
         {message && (
           <D3Message
             type={message.type}
