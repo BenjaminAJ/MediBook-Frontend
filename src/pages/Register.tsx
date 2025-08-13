@@ -3,38 +3,43 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import D3Message from '../components/D3Message';
 import { register } from '../services/Authapi';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState(''); // New phone state
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false); // New loading state
+  const [loading, setLoading] = useState(false);
 
   // Message state
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth(); // Get authLogin from AuthContext
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); // Set loading to true when submission starts
+    setLoading(true);
     if (password.length < 8) {
       setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
-      setLoading(false); // Reset loading on error
+      setLoading(false);
       return;
     }
     if (password !== confirm) {
       setMessage({ type: 'error', text: 'Passwords do not match.' });
-      setLoading(false); // Reset loading on error
+      setLoading(false);
       return;
     }
     try {
-      await register({ name, email, password });
+      const response = await register({ name, email, phone, password, role: 'patient' }); // Include phone
+      const userData = response.data; 
+      authLogin({ id: userData._id, email: userData.email, name: userData.name, role: userData.role, token: userData.token }); // Store user in context and local storage
       setMessage({ type: 'success', text: 'Registration successful!' });
       setTimeout(() => {
-        navigate('/Dashboard');
+        navigate('/register-medical-info');
       }, 1000);
     } catch (err: any) {
       setMessage({
@@ -45,7 +50,7 @@ const Register: React.FC = () => {
           'Registration failed.',
       });
     } finally {
-      setLoading(false); // Reset loading when submission finishes
+      setLoading(false);
     }
   };
 
@@ -120,6 +125,20 @@ const Register: React.FC = () => {
             </div>
             <div>
               <label className="block mb-1 font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                required
+                autoComplete="tel"
+                placeholder="e.g., +1234567890"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-gray-700">
                 Password
               </label>
               <div className="relative">
@@ -171,7 +190,7 @@ const Register: React.FC = () => {
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition"
-              disabled={loading} // Disable button when loading
+              disabled={loading}
             >
               {loading ? 'Registering...' : 'Register'}
             </button>

@@ -20,6 +20,7 @@ import ProviderUpdateAvailability from "./Admin/Providers/UpdateAvailability";
 import ProviderViewAppointments from "./Admin/Providers/ViewAppointments";
 import ProviderLogin from "./Admin/Providers/Login";
 import NotFound from "./pages/NotFound";
+import RegisterMedicalInfo from "./pages/RegisterMedicalInfo";
 
 // Admin dashboard layout with nested routes
 const adminDashboardRoutes: RouteObject = {
@@ -64,6 +65,9 @@ const router = createBrowserRouter([
   },
   { path: "/register", 
     element: <Register /> 
+  },
+  { path: "/register-medical-info",
+    element: <RegisterMedicalInfo />
   },
   { path: "/admin/login", 
     element: <AdminLogin /> 
