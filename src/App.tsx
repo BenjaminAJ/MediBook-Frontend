@@ -4,6 +4,7 @@ import {
   RouterProvider,
   RouteObject
 } from "react-router-dom";
+import { Analytics } from '@vercel/analytics/react';
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminLogin from "./Admin/Login";
@@ -81,7 +82,12 @@ const router = createBrowserRouter([
   { path: "*", element: <NotFound /> },
 ]);
 function App(): React.ReactElement {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Analytics />
+    </>
+  );
 }
 
 export default App;
