@@ -111,6 +111,12 @@ yarn dev
 
 The application will be accessible at `http://localhost:5173` (or another port if 5173 is in use).
 
+## Deployment
+
+This application is deployed on Vercel and can be accessed at:
+
+[https://medibook-psi.vercel.app/](https://medibook-psi.vercel.app/)
+
 ## API Documentation
 
 This frontend interacts with the MediBook Backend API. You can find the full API documentation here:
