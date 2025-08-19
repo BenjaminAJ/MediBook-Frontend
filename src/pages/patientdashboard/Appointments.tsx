@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Pencil, Trash2, PlusCircle } from "lucide-react";
 import D3Message from "../../components/D3Message";
 import {
-  getPatientAppointments,
+  getMyAppointments, // Changed from getPatientAppointments
   createAppointment,
   updateAppointment,
   cancelAppointment,
@@ -78,13 +78,10 @@ const Appointments: React.FC = () => {
     reason: "",
   });
 
-  // Replace with actual patientId logic as needed
-  const patientId = localStorage.getItem("userId") || "1";
-
   // Fetch appointments on mount
   useEffect(() => {
     setLoading(true);
-    getPatientAppointments(patientId)
+    getMyAppointments() 
       .then((res) => {
         // Map API data to local Appointment type
         const data = Array.isArray(res.data) ? res.data : [];
@@ -129,7 +126,6 @@ const Appointments: React.FC = () => {
       time: form.time,
       doctor: "", // not used in UI
       reason: form.reason,
-      patientId: patientId,
       providerId: form.Provider,
       status: "scheduled",
     };
@@ -144,7 +140,7 @@ const Appointments: React.FC = () => {
           text: editing ? "Appointment updated." : "Appointment booked.",
         });
         // Refresh appointments
-        return getPatientAppointments(patientId);
+        return getMyAppointments(); // Changed to getMyAppointments
       })
       .then((res) => {
         const data = Array.isArray(res.data) ? res.data : [];
@@ -189,7 +185,7 @@ const Appointments: React.FC = () => {
     cancelAppointment(id)
       .then(() => {
         setMessage({ type: "success", text: "Appointment cancelled." });
-        return getPatientAppointments(patientId);
+        return getMyAppointments(); // Changed to getMyAppointments
       })
       .then((res) => {
         const data = Array.isArray(res.data) ? res.data : [];
