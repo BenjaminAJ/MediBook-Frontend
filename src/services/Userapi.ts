@@ -14,3 +14,8 @@ export const getUserProfileById = (id: string | number) => {
 export const updateUserProfile = (id: string | number, data: Record<string, any>) => {
   return api.put(`/users/${id}`, data);
 };
+
+// Get all providers
+export const getProviders = () => {
+  return api.get(`/users/providers`);
+};

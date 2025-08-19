@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from "react";
 import { Pencil, Trash2, PlusCircle } from "lucide-react";
 import D3Message from "../../components/D3Message";
 import {
-  getMyAppointments, // Changed from getPatientAppointments
+  getMyAppointments,
   createAppointment,
   updateAppointment,
   cancelAppointment,
   Appointment as ApiAppointment,
 } from "../../services/Appointmentapi";
+import { getProviders } from "../../services/Userapi"; // Import getProviders
+import { useAuth } from "../../context/AuthContext"; // Import useAuth
 
 // D3 Loader Component
 const D3Loader: React.FC = () => {
@@ -57,12 +59,21 @@ type Appointment = {
   id: number;
   date: string;
   time: string;
-  Provider: string;
+  providerId: string; // Changed to providerId to match API
   reason: string;
 };
 
+type Provider = {
+  id: string;
+  name: string; // Assuming providers have a name
+  email: string;
+  // Add other provider properties as needed
+};
+
 const Appointments: React.FC = () => {
+  const { user } = useAuth(); // Get user from AuthContext
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]); // State to store providers
   const [editing, setEditing] = useState<Appointment | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState<{
@@ -74,23 +85,22 @@ const Appointments: React.FC = () => {
   const [form, setForm] = useState<Omit<Appointment, "id">>({
     date: "",
     time: "",
-    Provider: "",
+    providerId: "", // Changed to providerId
     reason: "",
   });
 
-  // Fetch appointments on mount
+  // Fetch appointments and providers on mount
   useEffect(() => {
     setLoading(true);
     getMyAppointments() 
       .then((res) => {
-        // Map API data to local Appointment type
         const data = Array.isArray(res.data) ? res.data : [];
         setAppointments(
           data.map((a: ApiAppointment) => ({
             id: a.id!,
             date: a.date,
             time: a.time,
-            Provider: a.providerId || "", // or map to provider name if available
+            providerId: a.providerId || "",
             reason: a.reason,
           }))
         );
@@ -99,16 +109,27 @@ const Appointments: React.FC = () => {
         setMessage({ type: "error", text: "Failed to load appointments." })
       )
       .finally(() => setLoading(false));
+
+    getProviders()
+      .then((res) => {
+        const data = Array.isArray(res.data) ? res.data : [];
+        setProviders(data.map((p: any) => ({ id: p._id, name: p.name || p.email, email: p.email }))); // Include email in the mapping
+      })
+      .catch((err) => {
+        console.log(err);
+        
+        setMessage({ type: "error", text: "Failed to load providers." });
+      });
     // eslint-disable-next-line
   }, []);
 
   const resetForm = () => {
-    setForm({ date: "", time: "", Provider: "", reason: "" });
+    setForm({ date: "", time: "", providerId: "", reason: "" }); // Changed to providerId
     setEditing(null);
   };
 
   const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> // Added HTMLSelectElement
   ) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -116,7 +137,7 @@ const Appointments: React.FC = () => {
 
   const handleBook = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.date || !form.time || !form.Provider || !form.reason) {
+    if (!form.date || !form.time || !form.providerId || !form.reason) { // Changed to providerId
       setMessage({ type: "error", text: "Please fill all fields." });
       return;
     }
@@ -126,7 +147,8 @@ const Appointments: React.FC = () => {
       time: form.time,
       doctor: "", // not used in UI
       reason: form.reason,
-      providerId: form.Provider,
+      patientId: user?.role === 'admin' ? (form as any).patientId : user?.id, // Conditional patientId for admin
+      providerId: form.providerId, // Changed to providerId
       status: "scheduled",
     };
     const action = editing
@@ -149,7 +171,7 @@ const Appointments: React.FC = () => {
             id: a.id!,
             date: a.date,
             time: a.time,
-            Provider: a.providerId || "",
+            providerId: a.providerId || "", // Changed to providerId
             reason: a.reason,
           }))
         );
@@ -174,7 +196,7 @@ const Appointments: React.FC = () => {
     setForm({
       date: app.date,
       time: app.time,
-      Provider: app.Provider,
+      providerId: app.providerId, // Changed to providerId
       reason: app.reason,
     });
     setShowForm(true);
@@ -194,7 +216,7 @@ const Appointments: React.FC = () => {
             id: a.id!,
             date: a.date,
             time: a.time,
-            Provider: a.providerId || "",
+            providerId: a.providerId || "", // Changed to providerId
             reason: a.reason,
           }))
         );
@@ -269,14 +291,20 @@ const Appointments: React.FC = () => {
               <label className="block mb-1 font-medium text-gray-700">
                 Provider
               </label>
-              <input
-                type="text"
-                name="Provider"
-                value={form.Provider}
+              <select
+                name="providerId" // Changed name to providerId
+                value={form.providerId} // Changed value to providerId
                 onChange={handleFormChange}
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg"
                 required
-              />
+              >
+                <option value="">Select a Provider</option>
+                {providers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block mb-1 font-medium text-gray-700">
@@ -290,6 +318,21 @@ const Appointments: React.FC = () => {
                 required
               />
             </div>
+            {user?.role === 'admin' && (
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Patient ID (Admin Only)
+                </label>
+                <input
+                  type="text"
+                  name="patientId"
+                  value={(form as any).patientId || ''} // Cast to any to access patientId
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg"
+                  placeholder="Enter Patient ID"
+                />
+              </div>
+            )}
           </div>
           <div className="flex gap-3 justify-end">
             <button
@@ -334,7 +377,9 @@ const Appointments: React.FC = () => {
                 <tr key={app.id} className="border-t">
                   <td className="px-4 py-2">{app.date}</td>
                   <td className="px-4 py-2">{app.time}</td>
-                  <td className="px-4 py-2">{app.Provider}</td>
+                  <td className="px-4 py-2">
+                    {providers.find((p) => p.id === app.providerId)?.name || app.providerId}
+                  </td> {/* Display provider name */}
                   <td className="px-4 py-2">{app.reason}</td>
                   <td className="px-4 py-2 text-center">
                     <button
