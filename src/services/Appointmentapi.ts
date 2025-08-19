@@ -41,3 +41,8 @@ export const getProviderAppointments = (providerId: string | number) => {
 export const getPatientAppointments = (patientId: string | number) => {
   return api.get(`/appointments/patient/${patientId}`);
 };
+
+// Get authenticated user's appointments
+export const getMyAppointments = () => {
+  return api.get(`/appointments/my-appointments`);
+};
