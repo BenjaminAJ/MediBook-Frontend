@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, FileText, LogOut } from "lucide-react";
+import { Users, FileText, LogOut, UserPlus } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
@@ -12,6 +12,11 @@ const navItems = [
     label: "Audit Logs",
     icon: <FileText size={20} className="mr-2" />,
     path: "/admin/dashboard/audit-logs",
+  },
+  {
+    label: "Create Provider Account",
+    icon: <UserPlus size={20} className="mr-2" />,
+    path: "/admin/dashboard/create-provider",
   },
 ];
 
