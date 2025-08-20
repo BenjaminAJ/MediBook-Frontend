@@ -16,14 +16,14 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await login({ email, password });
-      if (response.data.user.role === 'admin') {
+      const response = await login({ email, password });      
+      if (response.data.role === 'admin') {
         toast.success('Admin login successful!');
         navigate('/admin/dashboard');
       } else {
         toast.error('Access denied: Not an admin.');
       }
-    } catch (error: any) {
+    } catch (error: any) {      
       toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
