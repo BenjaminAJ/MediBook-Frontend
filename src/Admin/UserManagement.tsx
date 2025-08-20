@@ -41,8 +41,8 @@ const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await getAllUsers();
-      setUsers(Array.isArray(res.data) ? res.data : []);
+      const res = await getAllUsers();      
+      setUsers(Array.isArray(res.data.data) ? res.data.data : []);
       toast.success("Users loaded successfully!");
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load users.');
