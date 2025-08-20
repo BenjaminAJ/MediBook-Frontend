@@ -25,6 +25,25 @@ export const formatDate = (dateString: string): string => {
   }
 };
 
+// Formats a date string to YYYY-MM-DD for input type="date"
+export const formatDateToYYYYMMDD = (dateString: string): string => {
+  if (!dateString) return '';
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date');
+    }
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.error('Error formatting date to YYYY-MM-DD:', (error as Error).message);
+    return '';
+  }
+};
+
 // Formats only the date part in Nigerian format (DD/MM/YYYY)
 export const formatDateOnly = (dateString: string): string => {
   if (!dateString) return '';

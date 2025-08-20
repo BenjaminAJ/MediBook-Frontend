@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { getAuthenticatedUserProfile, updateUserProfile } from "../../services/Userapi";
-import { useAuth } from "../../context/AuthContext"; // Import useAuth
+import { useAuth } from "../../context/AuthContext";
+import { formatDateToYYYYMMDD } from "../../utils/formatDate"; // Import formatDateToYYYYMMDD
 
 type Address = {
   street: string;
@@ -403,7 +404,7 @@ const Profile: React.FC = () => {
             <input
               type="date"
               name="medicalInfo.dateOfBirth"
-              value={form.medicalInfo.dateOfBirth}
+              value={form.medicalInfo.dateOfBirth ? formatDateToYYYYMMDD(form.medicalInfo.dateOfBirth) : ''}
               onChange={handleChange}
               className="w-full border border-gray-300 px-4 py-2 rounded-lg"
               disabled={!isEditing}
