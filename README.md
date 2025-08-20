@@ -11,6 +11,7 @@ This is the frontend application for MediBook, a healthcare application designed
 *   **Axios**: A promise-based HTTP client for making API requests.
 *   **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
 *   **Lucide React**: A collection of beautiful open-source icons.
+*   **React Toastify**: For displaying toast notifications.
 
 ## Features
 
@@ -21,13 +22,21 @@ This is the frontend application for MediBook, a healthcare application designed
     *   Loading state for the registration button.
 *   **User Authentication**:
     *   Login functionality with email and password.
-    *   Integration with `AuthContext` for global user state management.
-    *   Stores user token and data in `localStorage` for persistent sessions.
+    *   Integration with `AuthContext` for global user state management, storing user token and data in `localStorage`.
+    *   **Admin Login**: Dedicated admin login page (`/admin/login`) with role-based access control.
+    *   **Provider Login**: Dedicated provider login page (`/provider/login`) with role-based access control; direct registration is disabled, and a message advises contacting support.
+*   **Admin Dashboard Features**:
+    *   **Create Provider Account**: A new page (`/admin/dashboard/create-provider`) allows administrators to register new provider accounts with comprehensive details.
+    *   **User Management**: View, delete, and update roles for all users via the `/admin/users` endpoint. Displays user details including name, email, and role.
+    *   **Audit Logs**: Retrieve and filter system audit logs via the `/admin/audit-logs` endpoint. Supports filtering by user ID and action type (using a dropdown of predefined actions).
+*   **Patient Profile Management**:
+    *   Patients can view and edit their profile information, including personal details, address, and medical information.
+    *   Date of birth field is formatted correctly for display and input.
 *   **Routing**:
     *   Protected routes for authenticated users (e.g., dashboard).
     *   Separate routes for admin and provider dashboards.
 *   **Responsive Design**: Built with Tailwind CSS for a mobile-first approach.
-*   **Error Handling**: Displays messages for registration and login failures.
+*   **Error Handling & Notifications**: Displays messages for various operations using `react-toastify`.
 
 ## Project Structure
 
@@ -37,8 +46,17 @@ medibook-frontend/
 │   └── MediBook.png
 ├── src/
 │   ├── Admin/
-│   │   ├── Providers/
-│   │   └── ... (Admin and Provider related components)
+│   │   ├── AuditLogs.tsx
+│   │   ├── CreateProvider.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── Login.tsx
+│   │   ├── UserManagement.tsx
+│   │   └── Providers/
+│   │       ├── Dashboard.tsx
+│   │       ├── Login.tsx
+│   │       ├── ManageSchedule.tsx
+│   │       ├── UpdateAvailability.tsx
+│   │       └── ViewAppointments.tsx
 │   ├── assets/
 │   ├── components/
 │   │   └── D3Message.tsx
@@ -50,9 +68,15 @@ medibook-frontend/
 │   │   ├── Register.tsx
 │   │   ├── RegisterMedicalInfo.tsx
 │   │   └── patientdashboard/
-│   │       └── ... (Patient dashboard components)
+│   │       ├── Appointments.tsx
+│   │       ├── Dashboard.tsx
+│   │       ├── History.tsx
+│   │       └── Profile.tsx
 │   ├── services/
+│   │   ├── Adminapi.ts
 │   │   ├── api.ts
+│   │   ├── Appointmentapi.ts
+│   │   ├── Audit-logsapi.ts
 │   │   ├── Authapi.ts
 │   │   └── Userapi.ts
 │   ├── utils/
