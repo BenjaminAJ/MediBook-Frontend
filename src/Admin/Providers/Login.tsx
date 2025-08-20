@@ -18,7 +18,6 @@ const LoginRegisterProvider: React.FC = () => {
       const response = await login(loginForm);
       if (response.data.user.role === 'provider') {
         toast.success("Provider login successful!");
-        // Save token/user info if needed
         navigate("/admin/providers/dashboard");
       } else {
         toast.error("Access denied: Not a provider.");

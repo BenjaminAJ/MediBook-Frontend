@@ -19,7 +19,6 @@ const AdminLogin: React.FC = () => {
       const response = await login({ email, password });
       if (response.data.user.role === 'admin') {
         toast.success('Admin login successful!');
-        // Store token or user info in context/localStorage if needed
         navigate('/admin/dashboard');
       } else {
         toast.error('Access denied: Not an admin.');
