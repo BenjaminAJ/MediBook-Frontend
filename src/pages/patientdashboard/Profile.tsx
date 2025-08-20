@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { getAuthenticatedUserProfile, updateUserProfile } from "../../services/Userapi";
 import { useAuth } from "../../context/AuthContext";
 import { formatDateToYYYYMMDD } from "../../utils/formatDate"; // Import formatDateToYYYYMMDD
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Address = {
   street: string;
@@ -248,9 +250,10 @@ const Profile: React.FC = () => {
     try {
       await updateUserProfile(user.id, dataToUpdate);
       setIsEditing(false);
-      alert("Profile saved!");
+      toast.success("Profile saved successfully!");
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to save profile.");
+      toast.error(err?.response?.data?.message || err?.message || "Failed to save profile.");
     } finally {
       setLoading(false);
     }
@@ -266,6 +269,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="w-full">
+      <ToastContainer /> {/* ToastContainer  */}
       {loading && (
         <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-60 z-50">
           <D3Loader />
