@@ -19,7 +19,6 @@ const AdminLogin: React.FC = () => {
     setLoading(true);
     try {
       const response = await authApiLogin({ email, password });
-      console.log("Admin Login Response Data:", response.data); // Log response data for inspection
       const { token, ...user } = response.data;
 
       if (user && user.role === 'admin' && token) { // Ensure user and token exist
