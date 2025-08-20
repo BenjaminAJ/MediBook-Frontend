@@ -16,7 +16,7 @@ const LoginRegisterProvider: React.FC = () => {
     setLoading(true);
     try {
       const response = await login(loginForm);
-      if (response.data.user.role === 'provider') {
+      if (response.data.role === 'provider') {
         toast.success("Provider login successful!");
         navigate("/admin/providers/dashboard");
       } else {
