@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../../services/Authapi";
+import { login as authApiLogin } from "../../services/Authapi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from '../../context/AuthContext';
 
 const LoginRegisterProvider: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const auth = useAuth();
 
   // Login state
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
@@ -15,8 +17,11 @@ const LoginRegisterProvider: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await login(loginForm);
-      if (response.data.role === 'provider') {
+      const response = await authApiLogin(loginForm);
+      const { user, token } = response.data;
+
+      if (user.role === 'provider') {
+        auth.login({ id: user._id, email: user.email, name: user.name, role: user.role, token });
         toast.success("Provider login successful!");
         navigate("/admin/providers/dashboard");
       } else {

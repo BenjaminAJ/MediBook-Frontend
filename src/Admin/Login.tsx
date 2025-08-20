@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../src/services/Authapi';
+import { login as authApiLogin } from '../../src/services/Authapi';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from '../../src/context/AuthContext';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,19 +12,24 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const auth = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await login({ email, password });      
-      if (response.data.role === 'admin') {
+      const response = await authApiLogin({ email, password });
+      console.log("Admin Login Response Data:", response.data); // Log response data for inspection
+      const { token, ...user } = response.data;
+
+      if (user && user.role === 'admin' && token) { // Ensure user and token exist
+        auth.login({ id: user._id, email: user.email, name: user.name, role: user.role, token });
         toast.success('Admin login successful!');
         navigate('/admin/dashboard');
       } else {
-        toast.error('Access denied: Not an admin.');
+        toast.error('Access denied: Invalid credentials or not an admin.');
       }
-    } catch (error: any) {      
+    } catch (error: any) {
       toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
