@@ -1,131 +1,32 @@
-import React, { useState, useRef, useEffect } from "react";
-import { login as loginApi, register as registerApi } from "../../services/Authapi";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from "../../services/Authapi";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-// D3 Message Component
-const D3Message: React.FC<{
-  type: "success" | "error";
-  message: string;
-  onClose: () => void;
-}> = ({ type, message, onClose }) => {
-  const ref = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    import("d3").then((d3) => {
-      const svg = d3.select(ref.current);
-      svg.selectAll("*").remove();
-      const color = type === "success" ? "#22c55e" : "#ef4444";
-      const icon =
-        type === "success" ? "M10 17l5 5l10 -10" : "M6 6l18 18M6 24l18-18";
-      svg
-        .append("circle")
-        .attr("cx", 20)
-        .attr("cy", 20)
-        .attr("r", 18)
-        .attr("fill", color)
-        .attr("opacity", 0.15);
-      svg
-        .append("path")
-        .attr("d", icon)
-        .attr("stroke", color)
-        .attr("stroke-width", 2.5)
-        .attr("fill", "none")
-        .attr("stroke-linecap", "round")
-        .attr("stroke-linejoin", "round");
-      svg
-        .append("circle")
-        .attr("cx", 20)
-        .attr("cy", 20)
-        .attr("r", 18)
-        .attr("stroke", color)
-        .attr("stroke-width", 2)
-        .attr("fill", "none")
-        .attr("stroke-dasharray", 113)
-        .attr("stroke-dashoffset", 113)
-        .transition()
-        .duration(600)
-        .attr("stroke-dashoffset", 0);
-    });
-  }, [type]);
-
-  useEffect(() => {
-    const timer = setTimeout(onClose, 2000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className="flex flex-col items-center justify-center">
-      <svg ref={ref} width={40} height={40} />
-      <div
-        className={`mt-2 font-semibold ${
-          type === "success" ? "text-green-600" : "text-red-600"
-        }`}
-      >
-        {message}
-      </div>
-    </div>
-  );
-};
-
-// Redesigned Login/Register Page for Providers
 const LoginRegisterProvider: React.FC = () => {
-  const [tab, setTab] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
   const navigate = useNavigate();
 
   // Login state
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
 
-  // Register state with providerInfo object
-  const [registerForm, setRegisterForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    providerInfo: {
-      specialization: "",
-      clinicName: "",
-      licenseNumber: "",
-    },
-  });
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    loginApi(loginForm)
-      .then(() => {
-        setMsg({ type: "success", text: "Login successful!" });
-        // Save token/user info if needed
-        setTimeout(() => {
-          navigate("/admin/providers/dashboard");
-        }, 1200);
-      })
-      .catch(() => setMsg({ type: "error", text: "Invalid credentials." }))
-      .finally(() => setLoading(false));
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    registerApi({
-      name: registerForm.name,
-      email: registerForm.email,
-      password: registerForm.password,
-      providerInfo: registerForm.providerInfo,
-      role: "provider"
-    })
-      .then(() => {
-        setMsg({ type: "success", text: "Registration successful!" });
-        setTimeout(() => {
-          navigate("/admin/providers/dashboard");
-        }, 1200);
-      })
-      .catch(() => setMsg({ type: "error", text: "Registration failed." }))
-      .finally(() => setLoading(false));
+    try {
+      const response = await login(loginForm);
+      if (response.data.user.role === 'provider') {
+        toast.success("Provider login successful!");
+        navigate("/admin/providers/dashboard");
+      } else {
+        toast.error("Access denied: Not a provider.");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -150,203 +51,57 @@ const LoginRegisterProvider: React.FC = () => {
         <div className="flex-1 p-8">
           <div className="flex mb-8 rounded-xl overflow-hidden shadow">
             <button
-              className={`flex-1 py-2 font-bold transition ${
-                tab === "login"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700"
-              }`}
-              onClick={() => setTab("login")}
+              className="flex-1 py-2 font-bold transition bg-green-600 text-white"
               disabled={loading}
             >
-              Login
-            </button>
-            <button
-              className={`flex-1 py-2 font-bold transition ${
-                tab === "register"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700"
-              }`}
-              onClick={() => setTab("register")}
-              disabled={loading}
-            >
-              Register
+              Access Provider Account
             </button>
           </div>
-          {msg && (
-            <div className="mb-4">
-              <D3Message
-                type={msg.type}
-                message={msg.text}
-                onClose={() => setMsg(null)}
+          <ToastContainer />
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-green-200"
+                value={loginForm.email}
+                onChange={(e) =>
+                  setLoginForm((f) => ({ ...f, email: e.target.value }))
+                }
+                required
+                disabled={loading}
+                autoComplete="username"
               />
             </div>
-          )}
-          {tab === "login" ? (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <label className="block mb-1 font-semibold text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-green-200"
-                  value={loginForm.email}
-                  onChange={(e) =>
-                    setLoginForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                  required
-                  disabled={loading}
-                  autoComplete="username"
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-semibold text-gray-700">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-green-200"
-                  value={loginForm.password}
-                  onChange={(e) =>
-                    setLoginForm((f) => ({ ...f, password: e.target.value }))
-                  }
-                  required
-                  disabled={loading}
-                  autoComplete="current-password"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition"
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Password
+              </label>
+              <input
+                type="password"
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-green-200"
+                value={loginForm.password}
+                onChange={(e) =>
+                  setLoginForm((f) => ({ ...f, password: e.target.value }))
+                }
+                required
                 disabled={loading}
-              >
-                {loading ? "Logging in..." : "Login"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-200"
-                    value={registerForm.name}
-                    onChange={(e) =>
-                      setRegisterForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-200"
-                    value={registerForm.email}
-                    onChange={(e) =>
-                      setRegisterForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-200"
-                    value={registerForm.password}
-                    onChange={(e) =>
-                      setRegisterForm((f) => ({
-                        ...f,
-                        password: e.target.value,
-                      }))
-                    }
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    Clinic Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-200"
-                    value={registerForm.providerInfo.clinicName}
-                    onChange={(e) =>
-                      setRegisterForm((f) => ({
-                        ...f,
-                        providerInfo: {
-                          ...f.providerInfo,
-                          clinicName: e.target.value,
-                        },
-                      }))
-                    }
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    License Number
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-200"
-                    value={registerForm.providerInfo.licenseNumber}
-                    onChange={(e) =>
-                      setRegisterForm((f) => ({
-                        ...f,
-                        providerInfo: {
-                          ...f.providerInfo,
-                          licenseNumber: e.target.value,
-                        },
-                      }))
-                    }
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
-                    Specialization
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-200"
-                    value={registerForm.providerInfo.specialization}
-                    onChange={(e) =>
-                      setRegisterForm((f) => ({
-                        ...f,
-                        providerInfo: {
-                          ...f.providerInfo,
-                          specialization: e.target.value,
-                        },
-                      }))
-                    }
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition"
-                disabled={loading}
-              >
-                {loading ? "Registering..." : "Register"}
-              </button>
-            </form>
-          )}
+                autoComplete="current-password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+          <p className="text-center text-gray-600 mt-6 text-sm">
+            To register as a provider, please contact support for assistance.
+          </p>
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import AdminLogin from "./Admin/Login";
 import AdminDashboard from "./Admin/Dashboard";
 import AdminUserManagement from "./Admin/UserManagement";
 import AdminAuditLogs from "./Admin/AuditLogs";
+import CreateProvider from "./Admin/CreateProvider";
 import PatientDashboard from "./pages/patientdashboard/Dashboard";
 import PatientHistory from "./pages/patientdashboard/History";
 import PatientProfile from "./pages/patientdashboard/Profile";
@@ -33,6 +34,9 @@ const adminDashboardRoutes: RouteObject = {
     },
     { path: "audit-logs", 
       element: <AdminAuditLogs /> 
+    },
+    { path: "create-provider",
+      element: <CreateProvider />
     },
   ],
 };
