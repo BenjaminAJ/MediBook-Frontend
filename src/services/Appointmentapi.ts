@@ -2,14 +2,12 @@ import api from './api';
 
 // Types
 export type Appointment = {
-  id?: number;
-  date: string;
-  time: string;
-  doctor: string;
-  reason: string;
-  patientId?: string;
-  providerId?: string;
+  _id?: string; // Changed from id to _id to match API response
+  dateTime: string;
+  patientId?: string | { _id: string; name: string; email: string; }; // Allow string or nested object
+  providerId: string | { _id: string; name: string; specialization: string; }; // Allow string or nested object
   status?: string;
+  notes?: string;
 };
 
 // Create a new appointment
