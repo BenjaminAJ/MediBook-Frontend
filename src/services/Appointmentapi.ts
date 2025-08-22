@@ -5,7 +5,7 @@ export type Appointment = {
   _id?: string; // Changed from id to _id to match API response
   dateTime: string;
   patientId?: string | { _id: string; name: string; email: string; }; // Allow string or nested object
-  providerId: string | { _id: string; name: string; specialization: string; }; // Allow string or nested object
+  providerId: string | { _id: string; name?: string; specialization?: string; providerInfo?: { clinicName: string; specialization: string; }; }; // Allow string or nested object, with optional providerInfo
   status?: string;
   notes?: string;
 };

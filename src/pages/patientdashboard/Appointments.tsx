@@ -70,16 +70,16 @@ const D3Loader: React.FC = () => {
 };
 
 type Appointment = {
-  _id: string; // Changed from id to _id to match ApiAppointment
-  patientId: { // Nested patientId object
+  _id: string;
+  patientId: {
     _id: string;
     name: string;
     email: string;
   };
-  providerId: { // Nested providerId object
+  providerId: {
     _id: string;
-    name: string;
-    specialization: string;
+    name: string; // Derived from providerInfo.clinicName
+    specialization: string; // From providerInfo.specialization
   };
   dateTime: string;
   status: string;
@@ -133,7 +133,11 @@ const [form, setForm] = useState<AppointmentForm>({
               : a.patientId!,
             providerId: typeof a.providerId === 'string'
               ? { _id: a.providerId, name: '', specialization: '' }
-              : a.providerId!,
+              : {
+                  _id: a.providerId._id,
+                  name: a.providerId.providerInfo?.clinicName || '',
+                  specialization: a.providerId.providerInfo?.specialization || '',
+                },
             dateTime: a.dateTime,
             status: a.status!,
             notes: a.notes,
@@ -210,7 +214,11 @@ const [form, setForm] = useState<AppointmentForm>({
               : a.patientId!,
             providerId: typeof a.providerId === 'string'
               ? { _id: a.providerId, name: '', specialization: '' }
-              : a.providerId!,
+              : {
+                  _id: a.providerId._id,
+                  name: a.providerId.providerInfo?.clinicName || '',
+                  specialization: a.providerId.providerInfo?.specialization || '',
+                },
             dateTime: a.dateTime,
             status: a.status!,
             notes: a.notes,
@@ -259,7 +267,11 @@ const [form, setForm] = useState<AppointmentForm>({
               : a.patientId!,
             providerId: typeof a.providerId === 'string'
               ? { _id: a.providerId, name: '', specialization: '' }
-              : a.providerId!,
+              : {
+                  _id: a.providerId._id,
+                  name: a.providerId.providerInfo?.clinicName || '',
+                  specialization: a.providerId.providerInfo?.specialization || '',
+                },
             dateTime: a.dateTime,
             status: a.status!,
             notes: a.notes,
