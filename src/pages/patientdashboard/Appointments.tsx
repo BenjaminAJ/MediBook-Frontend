@@ -8,8 +8,22 @@ import {
   cancelAppointment,
   Appointment as ApiAppointment,
 } from "../../services/Appointmentapi";
-import { getProviders } from "../../services/Userapi"; // Import getProviders
-import { useAuth } from "../../context/AuthContext"; // Import useAuth
+import { getProviders } from "../../services/Userapi";
+import { useAuth } from "../../context/AuthContext";
+import { formatDate } from "../../utils/formatDate"; // Import date formatting utilities
+
+// helper: convert ISO (or any parseable date) to "YYYY-MM-DDTHH:MM" for datetime-local
+const toDateTimeLocal = (iso?: string) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+};
 
 // D3 Loader Component
 const D3Loader: React.FC = () => {
@@ -56,11 +70,20 @@ const D3Loader: React.FC = () => {
 };
 
 type Appointment = {
-  id: number;
-  date: string;
-  time: string;
-  providerId: string; // Changed to providerId to match API
-  reason: string;
+  _id: string; // Changed from id to _id to match ApiAppointment
+  patientId: { // Nested patientId object
+    _id: string;
+    name: string;
+    email: string;
+  };
+  providerId: { // Nested providerId object
+    _id: string;
+    name: string;
+    specialization: string;
+  };
+  dateTime: string;
+  status: string;
+  notes?: string;
 };
 
 type Provider = {
@@ -83,12 +106,18 @@ const Appointments: React.FC = () => {
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState<Omit<Appointment, "id">>({
-    date: "",
-    time: "",
-    providerId: "", // Changed to providerId
-    reason: "",
-  });
+type AppointmentForm = {
+  dateTime: string;
+  providerId: string;
+  notes?: string;
+  patientId?: string; // For admin only
+};
+
+const [form, setForm] = useState<AppointmentForm>({
+  dateTime: "",
+  providerId: "",
+  notes: "",
+});
 
   // Fetch appointments and providers on mount
   useEffect(() => {
@@ -98,11 +127,16 @@ const Appointments: React.FC = () => {
         const data = Array.isArray(res.data) ? res.data : [];
         setAppointments(
           data.map((a: ApiAppointment) => ({
-            id: a.id!,
-            date: a.date,
-            time: a.time,
-            providerId: a.providerId || "",
-            reason: a.reason,
+            _id: a._id!, // Use _id from API response
+            patientId: typeof a.patientId === 'string'
+              ? { _id: a.patientId, name: '', email: '' }
+              : a.patientId!,
+            providerId: typeof a.providerId === 'string'
+              ? { _id: a.providerId, name: '', specialization: '' }
+              : a.providerId!,
+            dateTime: a.dateTime,
+            status: a.status!,
+            notes: a.notes,
           }))
         );
       })
@@ -125,7 +159,7 @@ const Appointments: React.FC = () => {
   }, []);
 
   const resetForm = () => {
-    setForm({ date: "", time: "", providerId: "", reason: "" }); // Changed to providerId
+    setForm({ dateTime: "", providerId: "", notes: "" });
     setEditing(null);
   };
 
@@ -138,22 +172,23 @@ const Appointments: React.FC = () => {
 
   const handleBook = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.date || !form.time || !form.providerId || !form.reason) { // Changed to providerId
-      setMessage({ type: "error", text: "Please fill all fields." });
+    if (!form.dateTime || !form.providerId) { // Removed reason from required fields
+      setMessage({ type: "error", text: "Please fill all required fields (Date & Time, Provider)." });
       return;
     }
     setLoading(true);
-    const apiData: Omit<ApiAppointment, "id"> = {
-      date: form.date,
-      time: form.time,
-      doctor: "", // not used in UI
-      reason: form.reason,
-      patientId: user?.role === 'admin' ? (form as any).patientId : user?.id, // Conditional patientId for admin
-      providerId: form.providerId, // Changed to providerId
-      status: "scheduled",
+
+    const fullDateTime = new Date(form.dateTime).toISOString();
+
+    const apiData: Omit<ApiAppointment, "_id"> = { // Changed from "id" to "_id"
+      dateTime: fullDateTime,
+      patientId: user?.role === 'admin' ? (form as any).patientId : user?.id,
+      providerId: form.providerId,
+      status: "pending", // Default status to pending
+      notes: form.notes,
     };
     const action = editing
-      ? updateAppointment(editing.id, apiData)
+      ? updateAppointment(editing._id!, apiData) // Changed editing.id to editing._id!
       : createAppointment(apiData);
 
     action
@@ -169,11 +204,16 @@ const Appointments: React.FC = () => {
         const data = Array.isArray(res.data) ? res.data : [];
         setAppointments(
           data.map((a: ApiAppointment) => ({
-            id: a.id!,
-            date: a.date,
-            time: a.time,
-            providerId: a.providerId || "", // Changed to providerId
-            reason: a.reason,
+            _id: a._id!,
+            patientId: typeof a.patientId === 'string'
+              ? { _id: a.patientId, name: '', email: '' }
+              : a.patientId!,
+            providerId: typeof a.providerId === 'string'
+              ? { _id: a.providerId, name: '', specialization: '' }
+              : a.providerId!,
+            dateTime: a.dateTime,
+            status: a.status!,
+            notes: a.notes,
           }))
         );
       })
@@ -195,30 +235,34 @@ const Appointments: React.FC = () => {
   const handleEdit = (app: Appointment) => {
     setEditing(app);
     setForm({
-      date: app.date,
-      time: app.time,
-      providerId: app.providerId, // Changed to providerId
-      reason: app.reason,
+      dateTime: toDateTimeLocal(app.dateTime),
+      providerId: app.providerId._id, // Use _id for providerId
+      notes: app.notes,
     });
     setShowForm(true);
   };
 
-  const handleCancel = (id: number) => {
+  const handleCancel = (id: string) => {
     setLoading(true);
     cancelAppointment(id)
       .then(() => {
         setMessage({ type: "success", text: "Appointment cancelled." });
-        return getMyAppointments(); // Changed to getMyAppointments
+        return getMyAppointments();
       })
       .then((res) => {
         const data = Array.isArray(res.data) ? res.data : [];
         setAppointments(
           data.map((a: ApiAppointment) => ({
-            id: a.id!,
-            date: a.date,
-            time: a.time,
-            providerId: a.providerId || "", // Changed to providerId
-            reason: a.reason,
+            _id: a._id!,
+            patientId: typeof a.patientId === 'string'
+              ? { _id: a.patientId, name: '', email: '' }
+              : a.patientId!,
+            providerId: typeof a.providerId === 'string'
+              ? { _id: a.providerId, name: '', specialization: '' }
+              : a.providerId!,
+            dateTime: a.dateTime,
+            status: a.status!,
+            notes: a.notes,
           }))
         );
       })
@@ -264,37 +308,24 @@ const Appointments: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block mb-1 font-medium text-gray-700">
-                Date
+                Date and Time
               </label>
-              <input
-                type="date"
-                name="date"
-                value={form.date}
-                onChange={handleFormChange}
-                className="w-full border border-gray-300 px-4 py-2 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Time
-              </label>
-              <input
-                type="time"
-                name="time"
-                value={form.time}
-                onChange={handleFormChange}
-                className="w-full border border-gray-300 px-4 py-2 rounded-lg"
-                required
-              />
+                <input
+                  type="datetime-local"
+                  name="dateTime"
+                  value={form.dateTime || ''}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg"
+                  required
+                />
             </div>
             <div>
               <label className="block mb-1 font-medium text-gray-700">
                 Provider
               </label>
               <select
-                name="providerId" // Changed name to providerId
-                value={form.providerId} // Changed value to providerId
+                name="providerId"
+                value={form.providerId}
                 onChange={handleFormChange}
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg"
                 required
@@ -309,14 +340,13 @@ const Appointments: React.FC = () => {
             </div>
             <div>
               <label className="block mb-1 font-medium text-gray-700">
-                Reason
+                Notes (Optional)
               </label>
               <textarea
-                name="reason"
-                value={form.reason}
+                name="notes"
+                value={form.notes || ''}
                 onChange={handleFormChange}
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg"
-                required
               />
             </div>
             {user?.role === 'admin' && (
@@ -327,7 +357,7 @@ const Appointments: React.FC = () => {
                 <input
                   type="text"
                   name="patientId"
-                  value={(form as any).patientId || ''} // Cast to any to access patientId
+                  value={(form as any).patientId || ''}
                   onChange={handleFormChange}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg"
                   placeholder="Enter Patient ID"
@@ -366,22 +396,22 @@ const Appointments: React.FC = () => {
           <table className="min-w-full">
             <thead>
               <tr>
-                <th className="px-4 py-2 text-left">Date</th>
-                <th className="px-4 py-2 text-left">Time</th>
+                <th className="px-4 py-2 text-left">Date & Time</th>
                 <th className="px-4 py-2 text-left">Provider</th>
-                <th className="px-4 py-2 text-left">Reason</th>
+                <th className="px-4 py-2 text-left">Status</th>
+                <th className="px-4 py-2 text-left">Notes</th>
                 <th className="px-4 py-2 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {appointments.map((app) => (
-                <tr key={app.id} className="border-t">
-                  <td className="px-4 py-2">{app.date}</td>
-                  <td className="px-4 py-2">{app.time}</td>
+                <tr key={app._id} className="border-t">
+                  <td className="px-4 py-2">{formatDate(app.dateTime)}</td>
                   <td className="px-4 py-2">
-                    {providers.find((p) => p.id === app.providerId)?.name || app.providerId}
-                  </td> {/* Display provider name */}
-                  <td className="px-4 py-2">{app.reason}</td>
+                    {app.providerId.name} ({app.providerId.specialization})
+                  </td>
+                  <td className="px-4 py-2 capitalize">{app.status}</td>
+                  <td className="px-4 py-2">{app.notes || '-'}</td>
                   <td className="px-4 py-2 text-center">
                     <button
                       className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 hover:text-white bg-blue-100 hover:bg-blue-700 rounded transition mr-2"
@@ -394,7 +424,7 @@ const Appointments: React.FC = () => {
                     <button
                       className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 hover:text-white bg-red-100 hover:bg-red-700 rounded transition"
                       title="Cancel"
-                      onClick={() => handleCancel(app.id)}
+                      onClick={() => handleCancel(app._id)}
                     >
                       <Trash2 size={16} className="mr-1" />
                       Cancel

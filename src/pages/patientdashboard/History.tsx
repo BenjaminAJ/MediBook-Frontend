@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CalendarCheck2 } from "lucide-react";
 import { getPatientAppointments, Appointment as ApiAppointment } from "../../services/Appointmentapi";
+import { formatDate, formatTimeOnly } from "../../utils/formatDate"; // Import date formatting utilities
 
 // Cool D3 Loader
 const D3CoolLoader: React.FC = () => {
@@ -109,18 +110,20 @@ const History: React.FC = () => {
               <tr>
                 <th className="px-4 py-2 text-left">Date</th>
                 <th className="px-4 py-2 text-left">Time</th>
-                <th className="px-4 py-2 text-left">Doctor</th>
-                <th className="px-4 py-2 text-left">Reason</th>
+                <th className="px-4 py-2 text-left">Provider</th>
+                <th className="px-4 py-2 text-left">Notes</th>
                 <th className="px-4 py-2 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
               {history.map((item) => (
-                <tr key={item.id} className="border-t">
-                  <td className="px-4 py-2">{item.date}</td>
-                  <td className="px-4 py-2">{item.time}</td>
-                  <td className="px-4 py-2">{item.doctor}</td>
-                  <td className="px-4 py-2">{item.reason}</td>
+                <tr key={item._id!} className="border-t">
+                  <td className="px-4 py-2">{formatDate(item.dateTime)}</td>
+                  <td className="px-4 py-2">{formatTimeOnly(item.dateTime)}</td>
+                  <td className="px-4 py-2">
+                    {typeof item.providerId === 'string' ? item.providerId : item.providerId?.name}
+                  </td>
+                  <td className="px-4 py-2">{item.notes || '-'}</td>
                   <td className="px-4 py-2">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold
