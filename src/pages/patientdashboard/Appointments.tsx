@@ -67,6 +67,7 @@ type Provider = {
   id: string;
   name: string; // Assuming providers have a name
   email: string;
+  clinicName: string;
   // Add other provider properties as needed
 };
 
@@ -112,8 +113,8 @@ const Appointments: React.FC = () => {
 
     getProviders()
       .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : [];
-        setProviders(data.map((p: any) => ({ id: p._id, name: p.name || p.email, email: p.email }))); // Include email in the mapping
+        const data = Array.isArray(res.data) ? res.data : [];        
+        setProviders(data.map((p: any) => ({ id: p._id, name: p.name || p.email, email: p.email, clinicName: p.providerInfo.clinicName }))); // Include email in the mapping
       })
       .catch((err) => {
         console.log(err);
@@ -301,7 +302,7 @@ const Appointments: React.FC = () => {
                 <option value="">Select a Provider</option>
                 {providers.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {p.clinicName}
                   </option>
                 ))}
               </select>
