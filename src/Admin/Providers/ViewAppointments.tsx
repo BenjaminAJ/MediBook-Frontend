@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ListChecks } from "lucide-react";
 import { getProviderAppointments, cancelAppointment, Appointment as ApiAppointment } from "../../services/Appointmentapi";
+import { formatDate, formatTimeOnly } from "../../utils/formatDate"; // Import date formatting utilities
 
 const ViewAppointments: React.FC = () => {
   const [appointments, setAppointments] = useState<ApiAppointment[]>([]);
@@ -20,9 +21,9 @@ const ViewAppointments: React.FC = () => {
       .finally(() => setLoading(false));
   }, [providerId]);
 
-  const handleCancel = (id: number) => {
+  const handleCancel = (_id: string) => { // Changed id type to string
     setLoading(true);
-    cancelAppointment(id)
+    cancelAppointment(_id) // Changed id to _id
       .then(() => {
         setMessage("Appointment cancelled.");
         // Refresh list
@@ -60,11 +61,13 @@ const ViewAppointments: React.FC = () => {
             </thead>
             <tbody>
               {appointments.map((app) => (
-                <tr key={app.id} className="border-t">
-                  <td className="px-4 py-2">{app.patientId}</td>
-                  <td className="px-4 py-2">{app.date}</td>
-                  <td className="px-4 py-2">{app.time}</td>
-                  <td className="px-4 py-2">{app.reason}</td>
+                <tr key={app._id!} className="border-t">
+                  <td className="px-4 py-2">
+                    {typeof app.patientId === 'string' ? app.patientId : app.patientId?.name}
+                  </td>
+                  <td className="px-4 py-2">{formatDate(app.dateTime)}</td>
+                  <td className="px-4 py-2">{formatTimeOnly(app.dateTime)}</td>
+                  <td className="px-4 py-2">{app.notes || '-'}</td>
                   <td className="px-4 py-2">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold
@@ -85,7 +88,7 @@ const ViewAppointments: React.FC = () => {
                     {app.status !== "cancelled" && (
                       <button
                         className="px-3 py-1 text-xs font-medium text-red-700 hover:text-white bg-red-100 hover:bg-red-700 rounded transition"
-                        onClick={() => handleCancel(app.id!)}
+                        onClick={() => handleCancel(app._id!)}
                         disabled={loading}
                       >
                         Cancel

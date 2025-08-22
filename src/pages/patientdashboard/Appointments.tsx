@@ -10,7 +10,7 @@ import {
 } from "../../services/Appointmentapi";
 import { getProviders } from "../../services/Userapi";
 import { useAuth } from "../../context/AuthContext";
-import { formatDate, formatTimeOnly, formatDateToYYYYMMDD } from "../../utils/formatDate"; // Import date formatting utilities
+import { formatDate } from "../../utils/formatDate"; // Import date formatting utilities
 
 // helper: convert ISO (or any parseable date) to "YYYY-MM-DDTHH:MM" for datetime-local
 const toDateTimeLocal = (iso?: string) => {
