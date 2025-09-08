@@ -19,7 +19,7 @@ type AuditLog = {
 const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ userId: '', action: '' }); // Changed 'user' to 'userId'
+  const [filters, setFilters] = useState({ userId: '', action: '' });
 
   const auditActions = [
     "login", "logout", "register_user", "update_user", "delete_user",
@@ -56,10 +56,10 @@ const AuditLogs: React.FC = () => {
         <div className="flex gap-4 mb-4">
           <input
             type="text"
-            placeholder="Filter by User ID" // Changed placeholder
+            placeholder="Filter by User ID"
             className="border px-3 py-2 rounded"
             value={filters.userId}
-            onChange={e => setFilters(f => ({ ...f, userId: e.target.value }))} // Changed to userId
+            onChange={e => setFilters(f => ({ ...f, userId: e.target.value }))}
           />
           <select
             className="border px-3 py-2 rounded"
@@ -78,26 +78,30 @@ const AuditLogs: React.FC = () => {
         ) : logs.length === 0 ? (
           <p className="text-gray-600">No audit logs found.</p>
         ) : (
-          <table className="min-w-full">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 text-left">User</th>
-                <th className="px-4 py-2 text-left">Action</th>
-                <th className="px-4 py-2 text-left">Timestamp</th>
-                <th className="px-4 py-2 text-left">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map(log => (
-                <tr key={log._id} className="border-t">
-                  <td className="px-4 py-2">{log.userId.name} ({log.userId.email})</td>
-                  <td className="px-4 py-2">{log.action}</td>
-                  <td className="px-4 py-2">{new Date(log.timestamp).toLocaleString()}</td>
-                  <td className="px-4 py-2">{log.details ? JSON.stringify(log.details) : '-'}</td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-gray-600 bg-gray-100 border-b">No.</th>
+                  <th className="px-4 py-2 text-left text-gray-600 bg-gray-100 border-b">User</th>
+                  <th className="px-4 py-2 text-left text-gray-600 bg-gray-100 border-b">Action</th>
+                  <th className="px-4 py-2 text-left text-gray-600 bg-gray-100 border-b">Timestamp</th>
+                  <th className="px-4 py-2 text-left text-gray-600 bg-gray-100 border-b">Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.map((log, index) => (
+                  <tr key={log._id} className="border-t border-gray-200 hover:bg-gray-50">
+                    <td className="px-4 py-2">{index + 1}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{log.userId?.email || 'N/A'}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{log.action}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-2">{log.details ? JSON.stringify(log.details) : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
